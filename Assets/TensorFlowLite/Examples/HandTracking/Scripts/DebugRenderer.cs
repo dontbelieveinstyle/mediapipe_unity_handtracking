@@ -49,10 +49,11 @@ public class DebugRenderer : MonoBehaviour
 
             float x = (width - landmark.x) * invWidth * Screen.width;
             float y = (height - landmark.y) * invHeight * Screen.height;
-            float z = (cameraPos.z - planePos.z) - 0.5f +  depth;
+            float z = planePos.z - cameraPos.z - 0.5f -  depth;
             Vector3 pos =  camera.ScreenToWorldPoint(new Vector3(x, y, z));
-            Quaternion q = Quaternion.AngleAxis(90, new Vector3(0,0,1));
-            Vector3 newPos = q * pos;
+            Quaternion q = Quaternion.AngleAxis(-90, new Vector3(0,0,1));
+            Quaternion r = Quaternion.AngleAxis(180, new Vector3(0,1,0));
+            Vector3 newPos = r * (q * pos);
             sphere[i].transform.localPosition = newPos;
         }
 
