@@ -6,13 +6,23 @@ using UnityEngine.Video;
 public class HandTracking : MonoBehaviour 
 {
     [Tooltip("Configurable TFLite model.")]
-    public int InputW = 256;
-    public int InputH = 256;
-    public TextAsset PalmDetection;
-    public TextAsset HandLandmark3D;
-    public int PalmDetectionLerpFrameCount = 3;
-    public int HandLandmark3DLerpFrameCount = 4;
-    public bool UseGPU = true;
+    [SerializeField]
+    private int InputW = 256;
+    [SerializeField]
+    private int InputH = 256;
+    [SerializeField]
+    private TextAsset PalmDetection;
+    [SerializeField]
+    private TextAsset HandLandmark3D;
+    [SerializeField]
+    private int PalmDetectionLerpFrameCount = 3;
+    [SerializeField]
+    private int HandLandmark3DLerpFrameCount = 4;
+    [SerializeField]
+    private bool UseGPU = true;
+    [SerializeField]
+    private bool debugHandLandmarks3D = true;
+
     private RenderTexture videoTexture;
     private Texture2D texture;
 
@@ -25,6 +35,7 @@ public class HandTracking : MonoBehaviour
     private WebCamTexture webCam;
     private Quaternion baseRotation;
     private Quaternion webCamRotation;
+    private float baseAspect = 0.0f;
 
     void Awake() { QualitySettings.vSyncCount = 0; }
 
@@ -66,7 +77,7 @@ public class HandTracking : MonoBehaviour
             int height = (int)rectTransform.rect.height;
             videoTexture = new RenderTexture(width, height, 24);
             deviceName = devices[0].name;
-            webCam = new WebCamTexture(deviceName);            
+            webCam = new WebCamTexture(deviceName);
             renderer.material.mainTexture = webCam;
             baseRotation = transform.rotation;
             webCam.Play();
@@ -76,6 +87,19 @@ public class HandTracking : MonoBehaviour
 
     void Update() 
     {
+        if (baseAspect == 0.0f)
+            if (webCam.width > 100)
+            {
+                var rectTransform = GetComponent<RectTransform>();
+                int width = (int)rectTransform.rect.width;
+                int height = (int)rectTransform.rect.height;
+                float modelAspect = (float)width / (float)height;
+                Debug.Log($"Model aspects: w={width}, h={height}, ar={modelAspect}");
+                float inputAspect = (float)webCam.width / (float)webCam.height;
+                Debug.Log($"WebCam aspects: w={webCam.width}, h={webCam.height}, ar={inputAspect}");
+                baseAspect = inputAspect/modelAspect;
+                Debug.Log($"Base Aspect is: {baseAspect}");
+            }
         transform.rotation = baseRotation * Quaternion.AngleAxis(webCam.videoRotationAngle, Vector3.up);
         webCamRotation = Quaternion.AngleAxis(webCam.videoRotationAngle, Vector3.up);
         Graphics.Blit(webCam, videoTexture);
@@ -93,11 +117,10 @@ public class HandTracking : MonoBehaviour
     {
         if (!inferencer.Initialized){ return; }
 
-        bool debugHandLandmarks3D = true;
         if (debugHandLandmarks3D)
         { 
             var handLandmarks = inferencer.HandLandmarks;
-            debugRenderer.DrawHand3D(handLandmarks, webCamRotation);
+            debugRenderer.DrawHand3D(handLandmarks, webCamRotation, baseAspect);
             if (debugRenderer.OpenHandPose())
                 Debug.Log("手势 -> Open hand");
         }

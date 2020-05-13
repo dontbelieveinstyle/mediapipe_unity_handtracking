@@ -20,7 +20,7 @@ public class DebugRenderer : MonoBehaviour
     private GameObject[] sphere = null;
     private GameObject[] cylinder = null;
 
-    public void DrawHand3D(Vector3[] landmarks, Quaternion webCamRotation) 
+    public void DrawHand3D(Vector3[] landmarks, Quaternion webCamRotation, float baseAspect) 
     {
         Vector3 pivot = default;
 
@@ -48,9 +48,11 @@ public class DebugRenderer : MonoBehaviour
             var depth = landmark.z / 64.0f;
 
             float x = (width - landmark.x) * invWidth * Screen.width;
-            float y = (height - landmark.y) * invHeight * Screen.height;
+            float y = (height - landmark.y) * invHeight * Screen.height / 2.163f;
             float z = planePos.z - cameraPos.z - 0.5f -  depth;
             Vector3 pos =  camera.ScreenToWorldPoint(new Vector3(x, y, z));
+            pos.y += 4.75f;
+            pos.x -= 1f;
             Quaternion q = Quaternion.AngleAxis(-90, new Vector3(0,0,1));
             Quaternion r = Quaternion.AngleAxis(180, new Vector3(0,1,0));
             Vector3 newPos = r * (q * pos);
